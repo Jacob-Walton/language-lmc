@@ -2,21 +2,34 @@
   "name": "language-lmc",
   "displayName": "LMC Assembly Language",
   "description": "Language support for Little Man Computer assembly",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "jacob-walton",
   "repository": {
     "type": "git",
     "url": "https://github.com/Jacob-Walton/language-lmc"
   },
+  "homepage": "https://github.com/Jacob-Walton/language-lmc/blob/main/README.md",
+  "bugs": {
+    "url": "https://github.com/Jacob-Walton/language-lmc/issues"
+  },
+  "galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
+  "keywords": [
+    "lmc",
+    "assembly",
+    "little man computer",
+    "education"
+  ],
   "engines": {
-    "vscode": "^1.63.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Programming Languages"
   ],
   "main": "./client/out/extension",
   "activationEvents": [
-    "onLanguage:lmc",
     "workspaceContains:**/*.lmc"
   ],
   "contributes": {
@@ -50,7 +63,8 @@
     "compile": "tsc -b",
     "watch": "tsc -b -w",
     "clean": "rimraf client/out && rimraf server/out",
-    "postinstall": "cd client && npm install && cd ../server && npm install"
+    "postinstall": "cd client && npm install && cd ../server && npm install",
+    "package": "vsce package"
   },
   "dependencies": {
     "language-lmc": "file:",

@@ -33,7 +33,8 @@ connection.onInitialize((params) => {
             diagnosticProvider: {
                 interFileDependencies: false,
                 workspaceDiagnostics: false
-            }
+            },
+            codeActionProvider: true // Add this line
         }
     };
     if (hasWorkspaceFolderCapability) {
@@ -99,6 +100,30 @@ const LMC_INSTRUCTIONS = [
     'INP', 'OUT', 'ADD', 'SUB', 'STA',
     'LDA', 'BRA', 'BRZ', 'BRP', 'DAT', 'HLT'
 ];
+// Add these template constants near the top with other constants
+const LMC_TEMPLATES = {
+    'MULTIPLY': `; Multiplication routine
+MULT    LDA #0          ; Initialize result
+LOOP    LDA RESULT      ; Load current result
+        ADD NUM1        ; Add first number
+        STA RESULT      ; Store result
+        LDA NUM2        ; Load second number
+        SUB #1          ; Decrement counter
+        STA NUM2        ; Store counter
+        BRP LOOP        ; Loop if positive
+        HLT             ; End program
+NUM1    DAT 0           ; First number
+NUM2    DAT 0           ; Second number
+RESULT  DAT 0           ; Result storage`,
+    'INPUT_LOOP': `; Input processing loop
+START   INP             ; Get input
+        BRZ END         ; If zero, end
+        STA VALUE       ; Store input
+        ; Process here
+        BRA START       ; Loop for more input
+END     HLT             ; End program
+VALUE   DAT 0           ; Storage for input`
+};
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
@@ -364,6 +389,180 @@ connection.onCompletionResolve((item) => {
     }
     return item;
 });
+// Add this new handler after the existing handlers
+const BRANCH_INSTRUCTIONS = ['BRA', 'BRP', 'BRZ'];
+connection.onCodeAction((params) => {
+    const textDocument = documents.get(params.textDocument.uri);
+    if (!textDocument)
+        return [];
+    const codeActions = [];
+    for (const diagnostic of params.context.diagnostics) {
+        if (diagnostic.source !== 'LMC')
+            continue;
+        // Fix for missing '#' prefix
+        if (diagnostic.message.includes("must be prefixed with '#'")) {
+            const range = diagnostic.range;
+            const text = textDocument.getText(range);
+            codeActions.push({
+                title: `Add '#' prefix to ${text}`,
+                kind: node_1.CodeActionKind.QuickFix,
+                diagnostics: [diagnostic],
+                edit: {
+                    changes: {
+                        [params.textDocument.uri]: [
+                            node_1.TextEdit.replace(range, `#${text}`)
+                        ]
+                    }
+                }
+            });
+        }
+        // Fix for DAT with missing operand
+        if (diagnostic.message.includes('DAT requires an operand')) {
+            codeActions.push({
+                title: 'Add default value 0',
+                kind: node_1.CodeActionKind.QuickFix,
+                diagnostics: [diagnostic],
+                edit: {
+                    changes: {
+                        [params.textDocument.uri]: [
+                            node_1.TextEdit.insert(diagnostic.range.end, ' 0')
+                        ]
+                    }
+                }
+            });
+        } // Fix for immediate value errors
+        if (diagnostic.message.includes('Immediate value must be between')) {
+            codeActions.push({
+                title: 'Set to 0',
+                kind: node_1.CodeActionKind.QuickFix,
+                diagnostics: [diagnostic],
+                edit: {
+                    changes: {
+                        [params.textDocument.uri]: [
+                            node_1.TextEdit.replace(diagnostic.range, '#0')
+                        ]
+                    }
+                }
+            });
+        }
+        // Handle undefined labels differently for branch instructions
+        if (diagnostic.message.includes('Undefined label:')) {
+            const range = diagnostic.range;
+            const labelName = textDocument.getText(range);
+            // Find the instruction that references this label
+            const lineText = textDocument.getText({
+                start: { line: range.start.line, character: 0 },
+                end: { line: range.start.line, character: 100 }
+            });
+            const instructionMatch = lineText.match(/^\s*(?:[A-Za-z]\w*)?\s*([A-Z]{3})/);
+            const instruction = instructionMatch ? instructionMatch[1] : '';
+            if (BRANCH_INSTRUCTIONS.includes(instruction)) {
+                // Create a code label for branch instructions
+                const insertLine = findDATSectionLine(textDocument);
+                codeActions.push({
+                    title: `Create code label '${labelName}'`,
+                    kind: node_1.CodeActionKind.QuickFix,
+                    diagnostics: [diagnostic],
+                    edit: {
+                        changes: {
+                            [params.textDocument.uri]: [
+                                node_1.TextEdit.insert({ line: insertLine, character: 0 }, `${labelName}\tHLT\n\n`)
+                            ]
+                        }
+                    }
+                });
+            }
+            else {
+                // Create a data label for other instructions
+                codeActions.push({
+                    title: `Create DAT label '${labelName}'`,
+                    kind: node_1.CodeActionKind.QuickFix,
+                    diagnostics: [diagnostic],
+                    edit: {
+                        changes: {
+                            [params.textDocument.uri]: [
+                                node_1.TextEdit.insert({ line: textDocument.lineCount, character: 0 }, `${labelName}\tDAT 0\n`)
+                            ]
+                        }
+                    }
+                });
+            }
+        }
+        // Add fix for invalid instructions
+        if (diagnostic.message.includes('Invalid instruction:')) {
+            const text = textDocument.getText(diagnostic.range);
+            const suggestions = LMC_INSTRUCTIONS.filter(instr => instr.startsWith(text[0]) ||
+                levenshteinDistance(text, instr) <= 2);
+            suggestions.forEach(suggestion => {
+                codeActions.push({
+                    title: `Change to '${suggestion}'`,
+                    kind: node_1.CodeActionKind.QuickFix,
+                    diagnostics: [diagnostic],
+                    edit: {
+                        changes: {
+                            [params.textDocument.uri]: [
+                                node_1.TextEdit.replace(diagnostic.range, suggestion)
+                            ]
+                        }
+                    }
+                });
+            });
+        }
+    }
+    // Add template insertions
+    const text = textDocument.getText();
+    if (text.trim().length === 0) {
+        Object.entries(LMC_TEMPLATES).forEach(([name, template]) => {
+            codeActions.push({
+                title: `Insert ${name} template`,
+                kind: node_1.CodeActionKind.QuickFix,
+                edit: {
+                    changes: {
+                        [params.textDocument.uri]: [
+                            node_1.TextEdit.insert({ line: 0, character: 0 }, template)
+                        ]
+                    }
+                }
+            });
+        });
+    }
+    return codeActions;
+});
+// Add helper function to find DAT section
+function findDATSectionLine(textDocument) {
+    const text = textDocument.getText();
+    const lines = text.split(/\r?\n/);
+    // Look for first DAT instruction
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line && !line.startsWith(';')) {
+            const match = line.match(/^\s*(?:[A-Za-z]\w*)?\s*DAT/);
+            if (match) {
+                return i;
+            }
+        }
+    }
+    return textDocument.lineCount; // Default to end of file if no DAT section found
+}
+// Add helper function for suggesting similar instructions
+function levenshteinDistance(a, b) {
+    if (a.length === 0)
+        return b.length;
+    if (b.length === 0)
+        return a.length;
+    const matrix = Array(a.length + 1).fill(null).map(() => Array(b.length + 1).fill(null));
+    for (let i = 0; i <= a.length; i++)
+        matrix[i][0] = i;
+    for (let j = 0; j <= b.length; j++)
+        matrix[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+        }
+    }
+    return matrix[a.length][b.length];
+}
 // Make the text document manager listen on the connection
 // for open, change and close text document events
 documents.listen(connection);

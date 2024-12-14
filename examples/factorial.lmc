@@ -1,41 +1,42 @@
-START     INP             ; Get input
-          STA NUM         ; Store in NUM
-          LDA ONE         ; Load ONE
-          STA FACT        ; Initialize FACT
+START   INP             ; Get input number
+        STA NUM         ; Store in NUM
+        LDA #1          ; Load immediate value 1
+        STA FACT        ; Initialize factorial to 1
 
-LOOP      LDA NUM         ; Load NUM
-          BRZ END         ; If zero, end
-          STA MULT2       ; Store in MULT2
-          LDA FACT        ; Load FACT
-          STA MULT1       ; Store in MULT1
-          LDA ZERO        ; Load ZERO
-          STA PROD        ; Initialize PROD
-          
-MUL_LOOP  LDA MULT2       ; Check MULT2
-          BRZ AFTER_MUL   ; If zero, after multiply
-          LDA PROD        ; Load PROD
-          ADD MULT1       ; Add MULT1
-          STA PROD        ; Store PROD
-          LDA MULT2       ; Load MULT2
-          SUB ONE         ; Subtract ONE
-          STA MULT2       ; Store MULT2
-          BRA MUL_LOOP    ; Repeat MUL_LOOP
-          
-AFTER_MUL LDA PROD        ; Load PROD
-          STA FACT        ; Store FACT
-          LDA NUM         ; Load NUM
-          SUB ONE         ; Subtract ONE
-          STA NUM         ; Store NUM
-          BRA LOOP        ; Repeat LOOP
+LOOP    LDA NUM         ; Load the current number
+        BRZ END         ; If zero, we're done
+        STA @PTR        ; Store it at location pointed to by PTR
+        LDA FACT        ; Load current factorial
+        STA MULT1       ; Store as first multiplier
+        LDA @PTR        ; Load number again (indirectly)
+        STA MULT2       ; Store as second multiplier
+        LDA #0          ; Load immediate 0
+        STA PROD        ; Initialize product to 0
+        
+MUL     LDA MULT2       ; Check if done multiplying
+        BRZ NEXT        ; If zero, multiplication done
+        LDA PROD        ; Load current product
+        ADD MULT1       ; Add multiplicand
+        STA PROD        ; Store result
+        LDA MULT2       ; Load multiplier
+        SUB #1          ; Subtract 1 (immediate)
+        STA MULT2       ; Store back
+        BRA MUL         ; Loop for multiplication
 
-END       LDA FACT        ; Load FACT
-          OUT             ; Output FACT
-          HLT             ; Halt program
-          
-ONE       DAT 1
-ZERO      DAT 0
-NUM       DAT 0
-FACT      DAT 0
-MULT1     DAT 0
-MULT2     DAT 0
-PROD      DAT 0
+NEXT    LDA PROD        ; Load multiplication result
+        STA FACT        ; Store as new factorial
+        LDA NUM         ; Load counter
+        SUB #1          ; Subtract 1 (immediate)
+        STA NUM         ; Store back
+        BRA LOOP        ; Continue factorial loop
+
+END     LDA FACT        ; Load final result
+        OUT             ; Output it
+        HLT             ; Stop program
+
+NUM     DAT             ; Number to calculate factorial of
+FACT    DAT             ; Running factorial value
+MULT1   DAT             ; First multiplier
+MULT2   DAT             ; Second multiplier
+PROD    DAT             ; Product for multiplication
+PTR     DAT NUM         ; Pointer for indirect addressing
