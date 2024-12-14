@@ -20,7 +20,7 @@ This extension offers language support for the Little Man Computer (LMC) assembl
 2. **Install the Extension**:
    - Open Visual Studio Code.
    - Navigate to the Extensions view by clicking on the Extensions icon in the Activity Bar or pressing `Ctrl+Shift+X`.
-   - Search for "LMC Assembly Language".
+   - Search for "LMC Assembly Language" or visit the [extension page](https://marketplace.visualstudio.com/items?itemName=Jacob-Walton.language-lmc).
    - Click **Install** on the extension developed by Jacob Walton.
 
 3. **Manual Installation**:
@@ -83,7 +83,7 @@ Contributions are welcome! Please follow these steps to contribute:
 2. **Clone Your Fork**:
 
    ```bash
-   git clone https://github.com/your-username/language-lmc.git
+   git clone https://github.com/Jacob-Walton/language-lmc.git
    ```
 
 3. **Create a Branch**:

@@ -2,9 +2,19 @@
 
 All notable changes to the "language-lmc" extension will be documented in this file.
 
+## [1.2.2] - 2024-12-14
+
+### Changes
+
+- **README.md**:
+  - Updated from `your-username` to `Jacob-Walton` in the forking section
+- **CHANGELOG.md**:
+  - Updated `Changed` to `Changes` in the `1.2.1` section
+  - Added version `1.2.2` to the changelog
+
 ## [1.2.1] - 2024-12-14
 
-### Changed
+### Changes
 
 - **server.ts**:
   - Replaced all existing comments with JSDoc comments for better documentation
