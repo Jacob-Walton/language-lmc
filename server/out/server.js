@@ -403,14 +403,56 @@ connection.onCompletion((_textDocumentPosition) => {
  * @returns The resolved completion item with additional details.
  */
 connection.onCompletionResolve((item) => {
-    if (item.data === 1) {
-        item.detail = 'TypeScript details';
-        item.documentation = 'TypeScript documentation';
-    }
-    else if (item.data === 2) {
-        item.detail = 'JavaScript details';
-        item.documentation = 'JavaScript documentation';
-    }
+    const instructionDetails = {
+        INP: {
+            detail: 'INP - Input',
+            documentation: 'Takes an input from the user and stores it in the accumulator.'
+        },
+        OUT: {
+            detail: 'OUT - Output',
+            documentation: 'Outputs the value from the accumulator.'
+        },
+        ADD: {
+            detail: 'ADD - Add',
+            documentation: 'Adds the value from a specified location to the accumulator.'
+        },
+        SUB: {
+            detail: 'SUB - Subtract',
+            documentation: 'Subtracts the value from a specified location from the accumulator.'
+        },
+        STA: {
+            detail: 'STA - Store',
+            documentation: 'Stores the value from the accumulator into a specified location.'
+        },
+        LDA: {
+            detail: 'LDA - Load',
+            documentation: 'Loads the value from a specified location into the accumulator.'
+        },
+        BRA: {
+            detail: 'BRA - Branch Always',
+            documentation: 'Unconditionally branches to a specified label.'
+        },
+        BRZ: {
+            detail: 'BRZ - Branch if Zero',
+            documentation: 'Branches to a specified label if the accumulator is zero.'
+        },
+        BRP: {
+            detail: 'BRP - Branch if Positive',
+            documentation: 'Branches to a specified label if the accumulator is positive.'
+        },
+        DAT: {
+            detail: 'DAT - Data',
+            documentation: 'Defines a data storage location.'
+        },
+        HLT: {
+            detail: 'HLT - Halt',
+            documentation: 'Stops the program execution.'
+        }
+    };
+    const detail = instructionDetails[item.label]?.detail || '';
+    const documentation = instructionDetails[item.label]?.documentation || '';
+    item.detail = detail;
+    item.documentation = documentation;
     return item;
 });
 const BRANCH_INSTRUCTIONS = ['BRA', 'BRP', 'BRZ'];

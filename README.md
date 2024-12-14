@@ -4,12 +4,10 @@ This extension offers language support for the Little Man Computer (LMC) assembl
 
 ## Features
 
-- **Syntax Highlighting**: Distinct highlighting for labels, instructions, operands, and comments.
-- **Code Completion**: Provides a list of LMC instructions as you type to streamline coding.
+- **Syntax Highlighting**: Highlighting for labels, instructions, operands, and comments.
+- **Code Completion**: Provides a list of LMC instructions as you type.
 - **Diagnostics**: Offers real-time feedback on syntax errors, duplicate labels, undefined references, and operand validations.
-- **Bracket Matching and Auto-Closing**: Enhances code readability and minimizes errors with automatic bracket pairing.
-- **Code Folding**: Allows efficient organisation of code using folding markers.
-- **Custom Configuration**: Enables customization of extension settings to fit your preferences.
+- **Code Folding**: You can fold code blocks to focus on specific sections and improve readability.
 
 ## Installation
 

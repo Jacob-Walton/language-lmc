@@ -2,6 +2,22 @@
 
 All notable changes to the "language-lmc" extension will be documented in this file.
 
+## [1.2.3] - 2024-12-14
+
+### Added
+
+- **server.ts**:
+  - Added support for providing completion items for instructions
+
+### Changes
+
+- **README.md**:
+  - Improved writing style and clarity
+- **language-configuration.json**:
+  - Updated `folding.markers` to actually work with labels in LMC
+- **CHANGELOG.md**:
+  - Added version `1.3.0` to the changelog
+
 ## [1.2.2] - 2024-12-14
 
 ### Changes

@@ -2,7 +2,7 @@
   "name": "language-lmc",
   "displayName": "LMC Assembly Language",
   "description": "Language support for Little Man Computer assembly",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "publisher": "jacob-walton",
   "repository": {
     "type": "git",
