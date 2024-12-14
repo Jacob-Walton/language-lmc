@@ -2,6 +2,15 @@
 
 All notable changes to the "language-lmc" extension will be documented in this file.
 
+## [1.2.1] - 2024-12-14
+
+### Changed
+
+- **server.ts**:
+  - Replaced all existing comments with JSDoc comments for better documentation
+- **CHANGELOG.md**:
+  - Added version `1.2.1` to the changelog
+
 ## [1.2.0] - 2024-12-14
 
 ### Added

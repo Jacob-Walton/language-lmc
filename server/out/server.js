@@ -1,23 +1,29 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
+/**
+ * Imports necessary modules and types from vscode-languageserver and vscode-languageserver-textdocument.
+ */
 const node_1 = require("vscode-languageserver/node");
 const vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
-// Create a connection for the server, using Node's IPC as a transport.
-// Also include all preview / proposed LSP features.
+/**
+ * Establishes a connection for the server using Node's IPC as a transport.
+ * Incorporates all preview and proposed LSP features.
+ */
 const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
-// Create a simple text document manager.
+/**
+ * Manages open text documents.
+ */
 const documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
+/**
+ * Handles the initialization of the server, determining client capabilities and setting up server capabilities.
+ * @param params - Initialization parameters provided by the client.
+ * @returns InitializeResult containing server capabilities.
+ */
 connection.onInitialize((params) => {
     const capabilities = params.capabilities;
-    // Does the client support the `workspace/configuration` request?
-    // If not, we fall back using global settings.
     hasConfigurationCapability = !!(capabilities.workspace && !!capabilities.workspace.configuration);
     hasWorkspaceFolderCapability = !!(capabilities.workspace && !!capabilities.workspace.workspaceFolders);
     hasDiagnosticRelatedInformationCapability = !!(capabilities.textDocument &&
@@ -26,7 +32,6 @@ connection.onInitialize((params) => {
     const result = {
         capabilities: {
             textDocumentSync: node_1.TextDocumentSyncKind.Incremental,
-            // Tell the client that this server supports code completion.
             completionProvider: {
                 resolveProvider: true
             },
@@ -34,7 +39,7 @@ connection.onInitialize((params) => {
                 interFileDependencies: false,
                 workspaceDiagnostics: false
             },
-            codeActionProvider: true // Add this line
+            codeActionProvider: true
         }
     };
     if (hasWorkspaceFolderCapability) {
@@ -46,9 +51,11 @@ connection.onInitialize((params) => {
     }
     return result;
 });
+/**
+ * Performs actions after the server has been initialized, such as registering for configuration changes and workspace folder changes.
+ */
 connection.onInitialized(() => {
     if (hasConfigurationCapability) {
-        // Register for all configuration changes.
         connection.client.register(node_1.DidChangeConfigurationNotification.type, undefined);
     }
     if (hasWorkspaceFolderCapability) {
@@ -57,26 +64,33 @@ connection.onInitialized(() => {
         });
     }
 });
-// The global settings, used when the `workspace/configuration` request is not supported by the client.
-// Please note that this is not the case when using this server with the client provided in this example
-// but could happen with other clients.
+/**
+ * Defines the default settings used when the client does not support workspace configuration.
+ */
 const defaultSettings = { maxNumberOfProblems: 1000 };
 let globalSettings = defaultSettings;
-// Cache the settings of all open documents
+/**
+ * Caches the settings of all open documents.
+ */
 const documentSettings = new Map();
+/**
+ * Handles changes to the configuration, updating settings and refreshing diagnostics as necessary.
+ * @param change - The configuration change event.
+ */
 connection.onDidChangeConfiguration(change => {
     if (hasConfigurationCapability) {
-        // Reset all cached document settings
         documentSettings.clear();
     }
     else {
         globalSettings = ((change.settings.languageServerExample || defaultSettings));
     }
-    // Refresh the diagnostics since the `maxNumberOfProblems` could have changed.
-    // We could optimize things here and re-fetch the setting first can compare it
-    // to the existing setting, but this is out of scope for this example.
     connection.languages.diagnostics.refresh();
 });
+/**
+ * Retrieves the settings for a specific document.
+ * @param resource - The URI of the document.
+ * @returns A promise resolving to the document's settings.
+ */
 function getDocumentSettings(resource) {
     if (!hasConfigurationCapability) {
         return Promise.resolve(globalSettings);
@@ -91,16 +105,20 @@ function getDocumentSettings(resource) {
     }
     return result;
 }
-// Only keep settings for open documents
+/**
+ * Removes settings for a document when it is closed.
+ * @param e - The document close event.
+ */
 documents.onDidClose(e => {
     documentSettings.delete(e.document.uri);
 });
-// LMC instruction set
 const LMC_INSTRUCTIONS = [
     'INP', 'OUT', 'ADD', 'SUB', 'STA',
     'LDA', 'BRA', 'BRZ', 'BRP', 'DAT', 'HLT'
 ];
-// Add these template constants near the top with other constants
+/**
+ * Defines template constants for multiplication routines and input loops.
+ */
 const LMC_TEMPLATES = {
     'MULTIPLY': `; Multiplication routine
 MULT    LDA #0          ; Initialize result
@@ -124,13 +142,21 @@ START   INP             ; Get input
 END     HLT             ; End program
 VALUE   DAT 0           ; Storage for input`
 };
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
+/**
+ * Validates the content of a text document and generates diagnostics.
+ * @param textDocument - The text document to validate.
+ * @returns A promise resolving to an array of diagnostics.
+ */
 documents.onDidChangeContent(change => {
     validateTextDocument(change.document).then(diagnostics => {
         connection.sendDiagnostics({ uri: change.document.uri, diagnostics });
     });
 });
+/**
+ * Validates the syntax and semantics of an LMC text document.
+ * @param textDocument - The text document to validate.
+ * @returns An array of diagnostics representing issues found.
+ */
 async function validateTextDocument(textDocument) {
     const text = textDocument.getText();
     const lines = text.split(/\r?\n/);
@@ -142,15 +168,11 @@ async function validateTextDocument(textDocument) {
         const trimmedLine = line.trim();
         if (trimmedLine === '' || trimmedLine.startsWith(';'))
             return;
-        // Split comment from line if present
         const codePart = line.split(';')[0];
-        // Improved regex to capture label, instruction, and operand
         const lineMatch = codePart.match(/^(?:([A-Za-z]\w*))?\s*([A-Z]{3})(?:\s+([^;\s]+))?/);
         if (lineMatch) {
             const [, label, instruction, operand] = lineMatch;
-            // Calculate exact instruction position
             let startChar = codePart.indexOf(instruction);
-            // Calculate exact operand position if it exists
             let operandStartChar = -1;
             if (operand) {
                 operandStartChar = codePart.indexOf(operand, startChar + instruction.length);
@@ -184,7 +206,6 @@ async function validateTextDocument(textDocument) {
         const { instruction, operand, lineNumber, startChar, operandStartChar } = line;
         if (!instruction)
             return;
-        // Validate instruction
         if (!LMC_INSTRUCTIONS.includes(instruction)) {
             diagnostics.push({
                 severity: node_1.DiagnosticSeverity.Error,
@@ -196,10 +217,8 @@ async function validateTextDocument(textDocument) {
                 source: 'LMC'
             });
         }
-        // Validate operands
         if (operand) {
             if (instruction === 'DAT') {
-                // DAT can accept an immediate value, a label, or a number without # prefix
                 if (operand.startsWith('#')) {
                     let num;
                     try {
@@ -262,7 +281,6 @@ async function validateTextDocument(textDocument) {
                             if (num < 0n || num > 18446744073709551615n) {
                                 throw new Error();
                             }
-                            // Numeric value without # prefix is an error
                             diagnostics.push({
                                 severity: node_1.DiagnosticSeverity.Error,
                                 range: {
@@ -286,7 +304,6 @@ async function validateTextDocument(textDocument) {
                         }
                     }
                     else if (operand.startsWith('#')) {
-                        // Added check for operand length after '#'
                         if (operand.length <= 1) {
                             diagnostics.push({
                                 severity: node_1.DiagnosticSeverity.Error,
@@ -320,7 +337,6 @@ async function validateTextDocument(textDocument) {
                         }
                     }
                     else if (operand.startsWith('@')) {
-                        // Validate indirect reference
                         const label = operand.slice(1);
                         if (!labels.has(label)) {
                             diagnostics.push({
@@ -335,7 +351,6 @@ async function validateTextDocument(textDocument) {
                         }
                     }
                     else if (!labels.has(operand)) {
-                        // Direct label reference
                         diagnostics.push({
                             severity: node_1.DiagnosticSeverity.Error,
                             range: {
@@ -350,7 +365,6 @@ async function validateTextDocument(textDocument) {
             }
         }
         else if (!['INP', 'OUT', 'HLT', 'DAT'].includes(instruction)) {
-            // Missing required operand (excluding DAT from requiring operand)
             diagnostics.push({
                 severity: node_1.DiagnosticSeverity.Error,
                 range: {
@@ -364,11 +378,18 @@ async function validateTextDocument(textDocument) {
     });
     return diagnostics;
 }
+/**
+ * Handles file change events monitored by VSCode.
+ * @param _change - The file change event.
+ */
 connection.onDidChangeWatchedFiles(_change => {
-    // Monitored files have change in VSCode
     connection.console.log('We received a file change event');
 });
-// This handler provides the initial list of the completion items.
+/**
+ * Provides the initial list of completion items.
+ * @param _textDocumentPosition - The text document position parameters.
+ * @returns An array of completion items.
+ */
 connection.onCompletion((_textDocumentPosition) => {
     return LMC_INSTRUCTIONS.map(instruction => ({
         label: instruction,
@@ -376,8 +397,11 @@ connection.onCompletion((_textDocumentPosition) => {
         data: instruction
     }));
 });
-// This handler resolves additional information for the item selected in
-// the completion list.
+/**
+ * Resolves additional information for a selected completion item.
+ * @param item - The completion item to resolve.
+ * @returns The resolved completion item with additional details.
+ */
 connection.onCompletionResolve((item) => {
     if (item.data === 1) {
         item.detail = 'TypeScript details';
@@ -389,8 +413,12 @@ connection.onCompletionResolve((item) => {
     }
     return item;
 });
-// Add this new handler after the existing handlers
 const BRANCH_INSTRUCTIONS = ['BRA', 'BRP', 'BRZ'];
+/**
+ * Provides code actions based on diagnostics, offering quick fixes and template insertions.
+ * @param params - Parameters containing text document information and diagnostics.
+ * @returns An array of code actions.
+ */
 connection.onCodeAction((params) => {
     const textDocument = documents.get(params.textDocument.uri);
     if (!textDocument)
@@ -399,7 +427,6 @@ connection.onCodeAction((params) => {
     for (const diagnostic of params.context.diagnostics) {
         if (diagnostic.source !== 'LMC')
             continue;
-        // Fix for missing '#' prefix
         if (diagnostic.message.includes("must be prefixed with '#'")) {
             const range = diagnostic.range;
             const text = textDocument.getText(range);
@@ -416,8 +443,7 @@ connection.onCodeAction((params) => {
                 }
             });
         }
-        // Fix for DAT with missing operand
-        if (diagnostic.message.includes('DAT requires an operand')) {
+        if (diagnostic.message.includes('DAT with missing operand')) {
             codeActions.push({
                 title: 'Add default value 0',
                 kind: node_1.CodeActionKind.QuickFix,
@@ -430,7 +456,7 @@ connection.onCodeAction((params) => {
                     }
                 }
             });
-        } // Fix for immediate value errors
+        }
         if (diagnostic.message.includes('Immediate value must be between')) {
             codeActions.push({
                 title: 'Set to 0',
@@ -445,11 +471,9 @@ connection.onCodeAction((params) => {
                 }
             });
         }
-        // Handle undefined labels differently for branch instructions
         if (diagnostic.message.includes('Undefined label:')) {
             const range = diagnostic.range;
             const labelName = textDocument.getText(range);
-            // Find the instruction that references this label
             const lineText = textDocument.getText({
                 start: { line: range.start.line, character: 0 },
                 end: { line: range.start.line, character: 100 }
@@ -457,7 +481,6 @@ connection.onCodeAction((params) => {
             const instructionMatch = lineText.match(/^\s*(?:[A-Za-z]\w*)?\s*([A-Z]{3})/);
             const instruction = instructionMatch ? instructionMatch[1] : '';
             if (BRANCH_INSTRUCTIONS.includes(instruction)) {
-                // Create a code label for branch instructions
                 const insertLine = findDATSectionLine(textDocument);
                 codeActions.push({
                     title: `Create code label '${labelName}'`,
@@ -473,7 +496,6 @@ connection.onCodeAction((params) => {
                 });
             }
             else {
-                // Create a data label for other instructions
                 codeActions.push({
                     title: `Create DAT label '${labelName}'`,
                     kind: node_1.CodeActionKind.QuickFix,
@@ -488,7 +510,6 @@ connection.onCodeAction((params) => {
                 });
             }
         }
-        // Add fix for invalid instructions
         if (diagnostic.message.includes('Invalid instruction:')) {
             const text = textDocument.getText(diagnostic.range);
             const suggestions = LMC_INSTRUCTIONS.filter(instr => instr.startsWith(text[0]) ||
@@ -509,7 +530,6 @@ connection.onCodeAction((params) => {
             });
         }
     }
-    // Add template insertions
     const text = textDocument.getText();
     if (text.trim().length === 0) {
         Object.entries(LMC_TEMPLATES).forEach(([name, template]) => {
@@ -528,11 +548,14 @@ connection.onCodeAction((params) => {
     }
     return codeActions;
 });
-// Add helper function to find DAT section
+/**
+ * Finds the line number for the DAT section in a text document.
+ * @param textDocument - The text document to search.
+ * @returns The line number where the DAT section starts.
+ */
 function findDATSectionLine(textDocument) {
     const text = textDocument.getText();
     const lines = text.split(/\r?\n/);
-    // Look for first DAT instruction
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         if (line && !line.startsWith(';')) {
@@ -542,9 +565,14 @@ function findDATSectionLine(textDocument) {
             }
         }
     }
-    return textDocument.lineCount; // Default to end of file if no DAT section found
+    return textDocument.lineCount;
 }
-// Add helper function for suggesting similar instructions
+/**
+ * Calculates the Levenshtein distance between two strings.
+ * @param a - The first string.
+ * @param b - The second string.
+ * @returns The Levenshtein distance as a number.
+ */
 function levenshteinDistance(a, b) {
     if (a.length === 0)
         return b.length;
@@ -563,9 +591,12 @@ function levenshteinDistance(a, b) {
     }
     return matrix[a.length][b.length];
 }
-// Make the text document manager listen on the connection
-// for open, change and close text document events
+/**
+ * Initiates listening for changes in open text documents.
+ */
 documents.listen(connection);
-// Listen on the connection
+/**
+ * Starts listening for connection events.
+ */
 connection.listen();
 //# sourceMappingURL=server.js.map
