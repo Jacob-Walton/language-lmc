@@ -1,0 +1,61 @@
+{
+    "comments": {
+        "lineComment": ";"
+    },
+    "brackets": [
+        ["(", ")"],
+        ["[", "]"],
+        ["{", "}"]
+    ],
+    "autoClosingPairs": [
+        ["(", ")"],
+        ["[", "]"],
+        ["{", "}"],
+        ["'", "'"],
+        ["\"", "\""]
+    ],
+    "surroundingPairs": [
+        ["(", ")"],
+        ["[", "]"],
+        ["{", "}"],
+        ["'", "'"],
+        ["\"", "\""]
+    ],
+    "wordPattern": "(?:[A-Za-z][A-Za-z0-9_]*|#\\d+|@[A-Za-z][A-Za-z0-9_]*)",
+    "onEnterRules": [
+        {
+            "beforeText": "^\\s*;.*$",
+            "action": {
+                "indent": "none",
+                "appendText": "; "
+            }
+        },
+        {
+            "beforeText": "^[A-Za-z][A-Za-z0-9_]*\\s+(?:INP|OUT|ADD|SUB|STA|LDA|BRA|BRZ|BRP|DAT|HLT)\\b.*$",
+            "action": {
+                "indent": "none"
+            }
+        },
+        {
+            "beforeText": "^\\s*\\w+:\\s*$",
+            "action": {
+                "indent": "indent"
+            }
+        },
+        {
+            "beforeText": "^\\s*DAT\\b.*$",
+            "action": {
+                "indent": "none"
+            }
+        }
+    ],
+    "folding": {
+        "markers": {
+            "start": "^\\s*; Region:\\s*(.*)$",
+            "end": "^\\s*; EndRegion"
+        }
+    },
+    "indentationRules": {
+        "increaseIndentPattern": "^\\s*\\w+:\\s*$"
+    }
+}

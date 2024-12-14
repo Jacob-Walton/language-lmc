@@ -1,0 +1,67 @@
+{
+  "name": "language-lmc",
+  "displayName": "LMC Assembly Language",
+  "description": "Language support for Little Man Computer assembly",
+  "version": "1.1.0",
+  "publisher": "jacob-walton",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jacob-Walton/language-lmc"
+  },
+  "engines": {
+    "vscode": "^1.63.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./client/out/extension",
+  "activationEvents": [
+    "onLanguage:lmc",
+    "workspaceContains:**/*.lmc"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "lmc",
+        "aliases": [
+          "LMC Assembly",
+          "lmc"
+        ],
+        "extensions": [
+          ".lmc"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/lmc-light.png",
+          "dark": "./icons/lmc-dark.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lmc",
+        "scopeName": "source.lmc",
+        "path": "./syntaxes/lmc.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w",
+    "clean": "rimraf client/out && rimraf server/out",
+    "postinstall": "cd client && npm install && cd ../server && npm install"
+  },
+  "dependencies": {
+    "language-lmc": "file:",
+    "vscode-languageclient": "^8.1.0",
+    "vscode-languageserver": "^8.1.0",
+    "vscode-languageserver-textdocument": "^1.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^16.0.0",
+    "@types/vscode": "^1.63.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.0"
+  }
+}

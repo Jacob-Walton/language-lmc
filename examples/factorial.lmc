@@ -1,0 +1,41 @@
+START     INP             ; Get input
+          STA NUM         ; Store in NUM
+          LDA ONE         ; Load ONE
+          STA FACT        ; Initialize FACT
+
+LOOP      LDA NUM         ; Load NUM
+          BRZ END         ; If zero, end
+          STA MULT2       ; Store in MULT2
+          LDA FACT        ; Load FACT
+          STA MULT1       ; Store in MULT1
+          LDA ZERO        ; Load ZERO
+          STA PROD        ; Initialize PROD
+          
+MUL_LOOP  LDA MULT2       ; Check MULT2
+          BRZ AFTER_MUL   ; If zero, after multiply
+          LDA PROD        ; Load PROD
+          ADD MULT1       ; Add MULT1
+          STA PROD        ; Store PROD
+          LDA MULT2       ; Load MULT2
+          SUB ONE         ; Subtract ONE
+          STA MULT2       ; Store MULT2
+          BRA MUL_LOOP    ; Repeat MUL_LOOP
+          
+AFTER_MUL LDA PROD        ; Load PROD
+          STA FACT        ; Store FACT
+          LDA NUM         ; Load NUM
+          SUB ONE         ; Subtract ONE
+          STA NUM         ; Store NUM
+          BRA LOOP        ; Repeat LOOP
+
+END       LDA FACT        ; Load FACT
+          OUT             ; Output FACT
+          HLT             ; Halt program
+          
+ONE       DAT 1
+ZERO      DAT 0
+NUM       DAT 0
+FACT      DAT 0
+MULT1     DAT 0
+MULT2     DAT 0
+PROD      DAT 0

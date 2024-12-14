@@ -1,0 +1,63 @@
+{
+    "name": "LMC Assembly",
+    "scopeName": "source.lmc",
+    "fileTypes": ["lmc"],
+    "patterns": [
+        {
+            "match": "^\\s*;.*$",
+            "name": "comment.line.semicolon.lmc"
+        },
+        {
+            "match": "^([A-Za-z][A-Za-z0-9_]*)(?=:?\\s+(?:INP|OUT|ADD|SUB|STA|LDA|BRA|BRZ|BRP|DAT|HLT)\\b)",
+            "name": "entity.name.label.declaration.lmc"
+        },
+        {
+            "match": "\\b(INP|OUT|ADD|SUB|STA|LDA|BRA|BRZ|BRP|DAT|HLT)\\b",
+            "name": "keyword.instruction.lmc"
+        },
+        {
+            "match": "#(\\d+)",
+            "name": "constant.numeric.immediate.lmc",
+            "captures": {
+                "1": { "name": "constant.numeric.value.lmc" }
+            }
+        },
+        {
+            "match": "@([A-Za-z][A-Za-z0-9_]*)",
+            "name": "variable.other.indirect.lmc",
+            "captures": {
+                "1": { "name": "variable.other.memory.reference.lmc" }
+            }
+        },
+        {
+            "match": "\\b\\d+\\b",
+            "name": "constant.numeric.decimal.lmc"
+        },
+        {
+            "match": "\\b[A-Za-z][A-Za-z0-9_]*\\b",
+            "name": "variable.other.memory.lmc"
+        },
+        {
+            "match": ";.*$",
+            "name": "comment.line.semicolon.trailing.lmc"
+        }
+    ],
+    "semanticTokenTypes": [
+        {
+            "id": "label",
+            "superType": "class"
+        },
+        {
+            "id": "instruction",
+            "superType": "keyword"
+        },
+        {
+            "id": "immediate",
+            "superType": "number"
+        },
+        {
+            "id": "indirect",
+            "superType": "variable"
+        }
+    ]
+}

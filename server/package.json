@@ -1,0 +1,15 @@
+{
+  "name": "language-lmc-server",
+  "description": "LMC Assembly Language Server",
+  "version": "1.0.0",
+  "publisher": "jacob-walton",
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+    "language-lmc-server": "file:",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.11"
+  },
+  "scripts": {}
+}
